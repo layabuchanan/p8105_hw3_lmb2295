@@ -1,0 +1,277 @@
+---
+title: "Homework 1"
+author: "Laya Buchanan"
+
+date: 2020-09-21
+output: github_document
+---
+
+This is my submission for the second homework assignment for P8105.  
+
+
+```{r message = FALSE, echo = FALSE}
+library(tidyverse)
+library(readxl)
+```
+
+
+# Problem 1: Mr Trash Wheel
+
+First, define a path to the dataset. 
+
+```{r}
+path_to_data = "./data/Trash-Wheel-Collection-Totals-7-2020-1.xlsx"
+```
+
+## Read in the Mr. Trash Wheel dataset.
+
+```{r}
+trashwheel_df = 
+	read_xlsx(
+		path = path_to_data,
+		sheet = "Mr. Trash Wheel",
+		range = cell_cols("A:N")) %>% 
+	janitor::clean_names() %>% 
+	drop_na(dumpster) %>% 
+	mutate(
+		sports_balls = round(sports_balls),
+		sports_balls = as.integer(sports_balls)
+	)
+```
+
+## Read precipitation data! For 2018 and 2017. 
+
+```{r}
+precip_2018 = 
+	read_excel(
+		"./data/Trash-Wheel-Collection-Totals-7-2020-1.xlsx",
+		sheet = "2018 Precipitation",
+		skip = 1
+	) %>% 
+	janitor::clean_names() %>% 
+	drop_na(month) %>% 
+	mutate(year = 2018) %>% 
+	relocate(year)
+precip_2017 = 
+	read_excel(
+		"./data/Trash-Wheel-Collection-Totals-7-2020-1.xlsx",
+		sheet = "2017 Precipitation",
+		skip = 1
+	) %>% 
+	janitor::clean_names() %>% 
+	drop_na(month) %>% 
+	mutate(year = 2017) %>% 
+	relocate(year)
+```
+
+Now combine annual precipitation dataframes. In the following code chunk, I create a "helper" tibble that contains pairs of numeric and character ways of representing month, and then merge that (using month number as a key) with the precipitation dataset. This technique is one I use often when I need to recode a moderate or large number of values for a variable. 
+
+```{r}
+month_df = 
+	tibble(
+		month = 1:12,
+		month_name = month.name
+	)
+precip_df = 
+	bind_rows(precip_2018, precip_2017)
+precip_df =
+	left_join(precip_df, month_df, by = "month")
+```
+
+This dataset contains information from the Mr. Trashwheel trash collector in Baltimore, Maryland. As trash enters the inner harbor, the trashwheel collects that trash, and stores it in a dumpster. The dataset contains information on year, month, and trash collected, include some specific kinds of trash. There are a total of `r nrow(trashwheel_df)` rows in our final dataset. Additional data sheets include month precipitation data. In this dataset:
+
+* The median number of sports balls found in a dumpster in 2017 was `r trashwheel_df %>% filter(year == 2017) %>% pull(sports_balls) %>% median()`
+* The total precipitation in 2018 was `r precip_df %>% filter(year == 2018) %>% pull(total) %>% sum()` inches.
+
+
+```{r}
+trashwheel_df = 
+  read_xlsx(
+    "./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx",
+    sheet = "Mr. Trash Wheel",
+    range = cell_cols("A:N")) %>%
+  janitor::clean_names() %>% 
+  drop_na(dumpster)
+```
+
+# Problem 2: NYC Transit Data
+
+## Read in the data
+
+Read in the NYC Transit dataset. 
+
+```{r message = FALSE}
+transit_df = read_csv("./data/NYC_Transit_Data.csv")
+```
+
+## Clean the data
+
+Clean up column names:
+
+```{r warning = FALSE, message = FALSE, results = "hide"}
+transit_df = janitor::clean_names(transit_df)
+```
+
+Select relevant variables and convert the entry variable from character to logical:
+```{r message = FALSE, results = "hide"}
+transit_df =
+  select( transit_df, line, station_name, station_latitude, station_longitude, route1, route2, route3, route4, route5, route6, route7, route8, route9, route10, route11, entry, entrance_type, vending, ada) %>% 
+  mutate(entry = recode(entry, "YES" = TRUE, "NO" = FALSE))
+
+```
+
+This data now contains the variables: line, station name, station latitude, station longitude, whether entry is allowed, whether vending exists, entrance type, and ADA compliance, as well as routes #2-11 existing as their own variables. So far, I have cleaned the column names and converted the "entry" variable from a character variable to a logical variable. There are 19 total columns and 1,868 observations in this dataset. These data are mostly tidy, however, it would be better if route number and route name were distinct variables.
+
+
+## Problem questions
+
+This code creates a table that only lists distinct stations:
+```{r}
+stations_df = 
+  distinct(transit_df,line, station_name, .keep_all = TRUE)
+
+```
+
+There are 465 unique stations.
+
+
+This code creates a table that only lists distinct stations that are ADA compliant
+
+```{r}
+ada_df =
+  filter(stations_df, ada == TRUE)
+```
+
+84 stations are ADA compliant.
+
+
+This code creates a table that only lists station entrances/exits without vending
+```{r}
+vending_df = 
+  transit_df %>% 
+  mutate(vending = recode(vending, "YES" = TRUE, "NO" = FALSE)) %>% 
+  filter(vending == FALSE)
+```
+
+There are 183 station entrances/exits without vending.
+
+
+This code creates a table that only lists station entrances/exits without vending that also allow entrance.
+```{r}
+allow_df = 
+  vending_df %>% 
+  filter(entry == TRUE)
+```
+
+There are 69 entrances/exits without vending that also allow entrance.
+
+As there are 183 station entrances/exits without vending and only 69 of them allow entrance, we can conclude that `r (69/183)*100`% of station entrances / exits without vending allow entrance.
+
+This code reformats the transit_df dataset so that the route number and route name are distinct variables.
+```{r}
+route_name_df = 
+  transit_df %>% 
+    mutate(route8 = recode(route8, `1` = "1", `2` = "2", `3` = "3", `4` = "4", `5` = "5",`6` = "6", `7` = "7")) %>% 
+  mutate(route9 = recode(route9, `1` = "1", `2` = "2", `3` = "3", `4` = "4", `5` = "5", `6` = "6",`7` = "7")) %>% 
+  mutate(route10 = recode(route10, `1` = "1", `2` = "2", `3` = "3", `4` = "4", `5` = "5",`6` = "6", `7` = "7")) %>% 
+  mutate(route11 = recode(route11, `1` = "1", `2` = "2", `3` = "3", `4` = "4", `5` = "5",`6` = "6", `7` = "7")) %>%
+  pivot_longer(
+    route1:route11,
+    names_to = "route_number",
+    names_prefix = "route",
+    values_to = "route_name"
+  )
+  
+```
+
+
+This code creates a dataset of only distinct stations that serve the A train.
+```{r}
+a_train_df= 
+  route_name_df %>% 
+  distinct(line, station_name, .keep_all = TRUE) %>% 
+  filter(route_name == "A")
+```
+There are 60 distinct stations that serve the A train.
+
+
+This code creates a dataset of the 60 distinct stations described above that are ADA compliant.
+```{r}
+ada_A_df =
+  filter(a_train_df, ada == TRUE)
+```
+Of the 60 distinct stations that serve the A train, 17 are ADA compliant.
+
+# Problem 3: FiveThirtyEight Data
+
+## Read in the data
+
+Read in the the FiveThirtyEight data
+
+```{r message = FALSE, results = "hide"}
+pols_month_df = read_csv("./data/pols_month.csv")
+snp_df = read_csv("./data/snp.csv")
+unemployment_df = read_csv("./data/unemployment.csv")
+```
+
+## Clean the data
+
+The code chunk below cleans up column names for the datasets pols_month_df, snp_df, and unemployment_df. 
+
+For the pols_month_df dataset, it separates the mon variable into integer variables year, month, and day, creates a president president variable taking values gop and dem, removing the prez_dem and prez_gop variables and removes the day variable:
+
+For the snp_df dataset, it separates the date variable into integer variables year, month, and day, rearranges the month and year rows to match pols_month_df, and removes the day variable.
+
+For the unemployment_df dataset, the code transforms the several month/unemployment variables to two distinct month and unemployment rate variables, reformats the month values to match the datasets above, converts the year values from numeric to character so the dataset can later be joined with the ones above, and rearranges the month and year rows to match pols_month_df and snp_df.
+
+
+```{r message = FALSE, results = "hide"}
+pols_month_df =
+  janitor::clean_names(pols_month_df) %>% 
+  separate(mon, into = c("year", "month", "day")) %>% 
+  mutate(month = recode(month, `01` = "january", `02` = "february",  `03` = "march", `04` = "april", `05` = "may", `06` = "june", `07` = "july", `08` = "august", `09` = "september", `10` = "october", `11` = "november", `12` = "december")) %>% 
+  relocate(prez_dem, .after = prez_gop) %>% 
+  pivot_longer(
+    prez_gop:prez_dem,
+    names_to = "president",
+    names_prefix = "prez_"
+  ) %>% 
+  select(-day) %>% 
+  arrange(year, month)
+
+snp_df = 
+  janitor::clean_names(snp_df) %>% 
+  separate(date, into = c("month", "day", "year")) %>%
+  mutate(month = recode(month, `1` = "january", `2` = "february",  `3` = "march", `4` = "april", `5` = "may", `6` = "june", `7` = "july", `8` = "august", `9` = "september", `10` = "october", `11` = "november", `12` = "december")) %>%
+  select(-day) %>% 
+  relocate(month, .after = year) %>% 
+  arrange(year, month)
+
+
+unemployment_df =
+  unemployment_df %>% 
+  janitor::clean_names() %>% 
+  pivot_longer(
+    jan:dec,
+    names_to = "month",
+    values_to = "unemployment_rate"
+  ) %>% 
+  mutate(month = recode(month, `jan` = "january", `feb` = "february",  `mar` = "march", `arp` = "april=", `jun` = "june", `jul` = "july", `aug` = "august", `sep` = "september", `oct` = "october", `nov` = "november", `dec` = "december")) %>% 
+  mutate(year = as.character(year)) %>% 
+  arrange(year, month)
+  
+```
+
+
+## Join the data
+
+```{r}
+intermediate_df = 
+  left_join(pols_month_df, snp_df, by = c("year", "month"))
+
+fivethirtyeight_df = 
+  left_join(intermediate_df, unemployment_df, by = c("year", "month"))
+```
+
+
+The dataset pols-month (now pols_month_df) originally contained 822 observations and 9 variables. This dataset has a time range from 1947 to 2015. The variables of interest for this assignment are: mon (date of the count), prez_gop (indicator of whether the president was republican on the associated date), and prez_dem (indicator of whether the president was democratic on the associated date). The dataset snp_df originally contained 787 observations of two variables: the date of the observation and the closing values of the S&P stock index on the associated date. This dataset has a time range from 1950 to 2015. The dataset unemployment_df originally had 68 obs and 13 variables, containing a variable for year, as well as unemployment listed by month, with each month existing as a unique variable with unemployment as a value. This dataset has a time range from January to 2015. After merging snp_df into pols_month_df, and merging the unemployment_df into the resulting dataset, the final result it fivethirtyeight_df. This dataset has a time range from 1947 to 2015. It has 1644 observations and 12 variables, the key variables being year, month, president, close, and unemployment rate. 
