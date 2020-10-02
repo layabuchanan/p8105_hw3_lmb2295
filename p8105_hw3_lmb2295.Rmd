@@ -57,27 +57,42 @@ accel_df =
       day == "Sunday" ~ "yes",
       TRUE ~ ""
     )) %>%
-   mutate(weekend = recode(weekend, "yes" = TRUE, "no" = FALSE)) %>% 
+  mutate(weekend = recode(weekend, "yes" = TRUE, "no" = FALSE)) %>% 
   relocate(weekend, .after = day)
   
-accel_class_df = 
-  accel_df %>% 
-  summarise_all(typeof) %>% 
-  select(week, day_id, day, weekend, activity_4)
     
 ```
 
 
-Next, I will check to see if the data is encoded with reasonable varaible clases.
+Next, I will check to see if the data is encoded with reasonable variable classes.
 
 ```{r}
 accel_class_df = 
   accel_df %>% 
   summarise_all(typeof) %>% 
-  select(week, day_id, day, weekend, activity_4)
+  select(week, day_id, day, weekend, activity_1)
 
 kable(accel_class_df)
 ```
+
+```{r echo = FALSE}
+remove(accel_class_df)
+```
+
+We can see from the table above that week, day_id, and the activity_* variables are numeric, the weekend variable is logical, and the day variable is a character variable. These are reasonable classes for the variable types so no further action is needed
+
+The resulting dataset contains 35 observations and 1444 variables. The 35 observations represent 35 days of accelerometer data collected on a 63 year-old male with BMI 25, who was admitted to the Advanced Cardiac Care Center of Columbia University Medical Center and diagnosed with congestive heart failure. The variables include the week number for each of the seven weeks recorded, the number of the day recorded, the day of the week for the observed day, a variable stating whether or not the observed day was a weekend day, as well as 1440 activity_* variables, each representing an activity count for each minute in the day.
+
+## Aggregate data
+
+```{r}
+accel_df1 = 
+  accel_df %>% 
+  rowwise() %>% 
+  mutate(total_activity = sum(c_across(activity_1:activity_1440)))%>% 
+  relocate(total_activity, .after = weekend)
+```
+
 
 # Problem 3: NY NOAA Data
 
