@@ -1,107 +1,45 @@
 ---
-title: "Homework 1"
+title: "Homework 3"
 author: "Laya Buchanan"
 
 date: 2020-09-21
 output: github_document
 ---
 
-This is my submission for the second homework assignment for P8105.  
-
+This is my submission for the third homework assignment for P8105.  
 
 ```{r message = FALSE, echo = FALSE}
 library(tidyverse)
-library(readxl)
+
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
+
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
 ```
 
 
 # Problem 1: Mr Trash Wheel
 
-First, define a path to the dataset. 
 
-```{r}
-path_to_data = "./data/Trash-Wheel-Collection-Totals-7-2020-1.xlsx"
-```
-
-## Read in the Mr. Trash Wheel dataset.
-
-```{r}
-trashwheel_df = 
-	read_xlsx(
-		path = path_to_data,
-		sheet = "Mr. Trash Wheel",
-		range = cell_cols("A:N")) %>% 
-	janitor::clean_names() %>% 
-	drop_na(dumpster) %>% 
-	mutate(
-		sports_balls = round(sports_balls),
-		sports_balls = as.integer(sports_balls)
-	)
-```
-
-## Read precipitation data! For 2018 and 2017. 
-
-```{r}
-precip_2018 = 
-	read_excel(
-		"./data/Trash-Wheel-Collection-Totals-7-2020-1.xlsx",
-		sheet = "2018 Precipitation",
-		skip = 1
-	) %>% 
-	janitor::clean_names() %>% 
-	drop_na(month) %>% 
-	mutate(year = 2018) %>% 
-	relocate(year)
-precip_2017 = 
-	read_excel(
-		"./data/Trash-Wheel-Collection-Totals-7-2020-1.xlsx",
-		sheet = "2017 Precipitation",
-		skip = 1
-	) %>% 
-	janitor::clean_names() %>% 
-	drop_na(month) %>% 
-	mutate(year = 2017) %>% 
-	relocate(year)
-```
-
-Now combine annual precipitation dataframes. In the following code chunk, I create a "helper" tibble that contains pairs of numeric and character ways of representing month, and then merge that (using month number as a key) with the precipitation dataset. This technique is one I use often when I need to recode a moderate or large number of values for a variable. 
-
-```{r}
-month_df = 
-	tibble(
-		month = 1:12,
-		month_name = month.name
-	)
-precip_df = 
-	bind_rows(precip_2018, precip_2017)
-precip_df =
-	left_join(precip_df, month_df, by = "month")
-```
-
-This dataset contains information from the Mr. Trashwheel trash collector in Baltimore, Maryland. As trash enters the inner harbor, the trashwheel collects that trash, and stores it in a dumpster. The dataset contains information on year, month, and trash collected, include some specific kinds of trash. There are a total of `r nrow(trashwheel_df)` rows in our final dataset. Additional data sheets include month precipitation data. In this dataset:
-
-* The median number of sports balls found in a dumpster in 2017 was `r trashwheel_df %>% filter(year == 2017) %>% pull(sports_balls) %>% median()`
-* The total precipitation in 2018 was `r precip_df %>% filter(year == 2018) %>% pull(total) %>% sum()` inches.
-
-
-```{r}
-trashwheel_df = 
-  read_xlsx(
-    "./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx",
-    sheet = "Mr. Trash Wheel",
-    range = cell_cols("A:N")) %>%
-  janitor::clean_names() %>% 
-  drop_na(dumpster)
-```
-
-# Problem 2: NYC Transit Data
+# Problem 2: Accelerometer Data
 
 ## Read in the data
 
-Read in the NYC Transit dataset. 
+Read in the Accelerometer dataset. 
 
 ```{r message = FALSE}
-transit_df = read_csv("./data/NYC_Transit_Data.csv")
+accel_df = read_csv("./data/accel_data.csv")
 ```
 
 ## Clean the data
@@ -109,14 +47,27 @@ transit_df = read_csv("./data/NYC_Transit_Data.csv")
 Clean up column names:
 
 ```{r warning = FALSE, message = FALSE, results = "hide"}
-transit_df = janitor::clean_names(transit_df)
+accel_df = janitor::clean_names(accel_df)
 ```
 
 Select relevant variables and convert the entry variable from character to logical:
 ```{r message = FALSE, results = "hide"}
-transit_df =
-  select( transit_df, line, station_name, station_latitude, station_longitude, route1, route2, route3, route4, route5, route6, route7, route8, route9, route10, route11, entry, entrance_type, vending, ada) %>% 
-  mutate(entry = recode(entry, "YES" = TRUE, "NO" = FALSE))
+accel_df =
+  janitor::clean_names(accel_df) %>%  
+  mutate(
+    weekend = case_when(
+      day ==  "Monday" ~ "no",
+      day ==  "Tuesday" ~ "no",
+      day ==  "Wednesday" ~ "no",
+      day ==  "Thursday" ~ "no",
+      day ==  "Friday" ~ "no",
+      day == "Saturday" ~ "yes",
+      day == "Sunday" ~ "yes",
+      TRUE      ~ ""
+    ))
+accel_df = 
+  relocate(weekend, .after = day)
+    
 
 ```
 
