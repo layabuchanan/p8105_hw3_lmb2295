@@ -11,6 +11,7 @@ This is my submission for the third homework assignment for P8105.
 ```{r message = FALSE, echo = FALSE}
 library(tidyverse)
 library(knitr)
+library(patchwork)
 
 knitr::opts_chunk$set(
   fig.width = 6,
@@ -225,9 +226,65 @@ ny_noaa %>%
 The most commonly observed snowfall value is 0mm because it does not snow on most days in New York.
 
 ```{r}
-ny_noaa %>% 
+ny_noaa_df %>% 
+  filter(month == "january") %>%
+  group_by(year) %>% 
+  summarize(
+      mean_tmax = mean(tmax, na.rm = TRUE)
+  ) %>% 
+  ggplot(aes(x = year, y = mean_tmax)) + 
+    geom_point() + geom_line()
+
+
+jan_df = 
+ny_noaa_df %>% 
+  filter(month == "january") %>% 
   group_by(year) %>%
   summarize(
-    mean_tmax = mean(tmax, na.rm = TRUE)
+    mean_tmax = mean(tmax, na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  
+
+jul_df = 
+ny_noaa_df %>% 
+  filter(month == "july") %>% 
+  group_by(year) %>%
+  summarize(
+    mean_tmax = mean(tmax, na.rm = TRUE))
+
+ggplot(data = jan_df, aes(x = year, y = mean_tmax, color = mean_tmax)) + 
+  geom_point() + 
+  geom_line(data = jan_df)
+  labs(
+    title = "Weekend and Total Daily Activity",
+    x = "Weekend",
+    y = "Total Activity Count for Day",
+    caption = "Activity counts displayed are in the hundered thousands, ex: 2 = 200000") +
+  scale_y_continuous(
+    breaks = c(200000, 400000, 600000), 
+    labels = c(2, 4, 6))
+```
+
+```{r}
+tmax_p = 
+  ggplot(ny_noaa_df, aes(x = tmax, fill = "blue")) + 
+  geom_histogram(alpha = .4, adjust = .5, color = "blue")
+labs(
+    title = "Max daily Temperature Frequencies",
+    x = "Max Temp",
+    y = "Frequency") +
+  scale_y_continuous(
+    breaks = c(200000, 400000, 600000), 
+    labels = c(2, 4, 6))
+
+tmin_p = 
+  ggplot(ny_noaa_df, aes(x = tmin, fill = "blue")) + 
+  geom_histogram(alpha = .4, adjust = .5, color = "blue")
+labs(
+    caption = "Min daily Temperature Frequencies",
+    x = "Max Temp",
+    y = "Frequency")
+
+tmin_p/tmax_p
 ```
 
