@@ -149,20 +149,19 @@ What about in the course of the day?
 accel_df %>% 
   pivot_longer(
     activity_1:activity_1440,
-    names_to = "activity",
-    values_to = "activity_1:activity_1440"
-  )
-accel_df %>% 
-  ggplot(aes(x = day_id, y = across(activity_1:activity_1440))) + 
-  geom_point(aes(size = 4, color = day), alpha = .7) + geom_line(aes(), alpha = .5)+ 
+    names_to = "activity_number",
+    names_prefix = "activity_",
+    values_to = "activity_count"
+  ) %>% 
+  ggplot(aes(x = activity_number, y = activity_count, color = day_id)) +
+  geom_line() + 
   labs(
-    title = "Day of Measurement and Total Daily Activity",
-    x = "Day of Measurement",
-    y = "Total Activity Count for Day",
-    caption = "Activity counts displayed are in the hundered thousands, ex: 2 = 200000")+
-  scale_y_continuous(
-    breaks = c(200000, 400000, 600000), 
-    labels = c(2, 4, 6))
+    title = "24 hour Activity Time Courses",
+    x = "Hour",
+    y = "Activity Count") +
+  scale_x_continuous(
+    breaks = c(0, 180, 360, 540, 720, 900, 1080, 1260), 
+    labels = c("12am", "3am", "6am", "9am", "12pm", "3pm", "6pm", "9pm" ))
 ```
 
 
