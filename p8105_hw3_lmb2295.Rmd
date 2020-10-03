@@ -94,6 +94,8 @@ accel_df =
   relocate(total_activity, .after = weekend)
 ```
 
+
+In this next chunk of code, I am using a table to explore whether there is any obvious relationship between total daily activity and the day of monitoring and day of the week.
 ```{r}
 aggregate_df = 
   accel_df %>% 
@@ -102,8 +104,130 @@ aggregate_df =
 kable(aggregate_df)
 ```
 
+There doesn't seem to be any obvious patterns. How about a chart?
+
+
+```{r}
+accel_df %>% 
+  ggplot(aes(x = day_id, y = total_activity)) + 
+  geom_point(aes(size = 4, color = day), alpha = .7) + geom_line(aes(), alpha = .5)+ 
+  labs(
+    title = "Day of Measurement and Total Daily Activity",
+    x = "Day of Measurement",
+    y = "Total Activity Count for Day",
+    caption = "Activity counts displayed are in the hundered thousands, ex: 2 = 200000")+
+  scale_y_continuous(
+    breaks = c(200000, 400000, 600000), 
+    labels = c(2, 4, 6))
+
+```
+
+
+We can kind of see some patterns here. This man's activity level is very variable on the weekends, with both some of his highest and loWest activity days occuring on the weekends. His activity levels remain closer to his mean in the middle of the week. Here's a chart to more fully explore this pattern:
+
+
+```{r}
+accel_df %>% 
+  ggplot(aes(x = weekend, y = total_activity)) + 
+  geom_boxplot(aes(), alpha = .5) + 
+  labs(
+    title = "Weekend and Total Daily Activity",
+    x = "Weekend",
+    y = "Total Activity Count for Day",
+    caption = "Activity counts displayed are in the hundered thousands, ex: 2 = 200000") +
+  scale_y_continuous(
+    breaks = c(200000, 400000, 600000), 
+    labels = c(2, 4, 6))
+```
+
+This chart confirms our previous observations. While the mean total daily activity is pretty similar whether or not it's the weekend, it is a little lower on the weekend with a much larger range of values.
+
+
+What about in the course of the day?
+```{r}
+accel_df %>% 
+  pivot_longer(
+    activity_1:activity_1440,
+    names_to = "activity",
+    values_to = "activity_1:activity_1440"
+  )
+accel_df %>% 
+  ggplot(aes(x = day_id, y = across(activity_1:activity_1440))) + 
+  geom_point(aes(size = 4, color = day), alpha = .7) + geom_line(aes(), alpha = .5)+ 
+  labs(
+    title = "Day of Measurement and Total Daily Activity",
+    x = "Day of Measurement",
+    y = "Total Activity Count for Day",
+    caption = "Activity counts displayed are in the hundered thousands, ex: 2 = 200000")+
+  scale_y_continuous(
+    breaks = c(200000, 400000, 600000), 
+    labels = c(2, 4, 6))
+```
+
+
 
 # Problem 3: NY NOAA Data
 
 ## Read in the data
+
+
+```{r message = FALSE, results = "hide"}
+library(p8105.datasets)
+data("ny_noaa")
+```
+
+This dataset is a able consisting of 259176 observations and 7 variables. These variables include id (the weather station ID), date, prcp (precipitation), snow and snwd (snowfall and snowdepth in mm), tmax and tmin (the maximum and minimum temperature recorded in tenths of degrees C). A considerable number of measurements for the precipitation, snowfall, and temperature measurements are missing, which could present issues depending on the data analysis you intend to conduct. The large number of observations can also be difficult for some devices to handle, and there is no benefit as many of the observations contain no useful measurements.
+
+## Data Cleaning
+
+This code creates separate variables for year, month and day, lists the name of the month rather than the number, and removes rows with no measurements for precipitation, snow, or temperature.
+
+Now, I will check to see if the variables are encoded with reasonable class types:
+```{r}
+noaa_class_df = 
+  ny_noaa %>% 
+  summarise_all(typeof)
+
+kable(noaa_class_df)
+```
+
+```{r echo = FALSE}
+remove(accel_class_df)
+```
+tmin and tmax currently exists as character vectors. This could present a problem for data analysis. I will address this issue in the next cleaning step.
+
+
+Here, I am separating the data variable into month, day, and year variables, converting the minimum and maximum temperatures into a more reasonable class type, and changing the snow and temperature units into more intuitive units.
+```{r}
+ny_noaa_df = 
+ny_noaa %>% 
+  separate(date, into = c("year", "month", "day")) %>% 
+  mutate(month = recode(month, `01` = "january", `02` = "february",  `03` = "march", `04` = "april", `05` = "may", `06` = "june", `07` = "july", `08` = "august", `09` = "september", `10` = "october", `11` = "november", `12` = "december")) %>% 
+  mutate(
+    tmin = as.numeric(tmin),
+    tmax = as.numeric(tmax),
+    tmin = tmin/10,
+    tmax = tmax/10,
+    snow = snow/10,
+    snow = snow/10
+  ) %>% 
+
+  
+```
+
+```{r}
+ny_noaa %>% 
+  group_by(snow) %>%
+  summarize(
+    n_obs = n())
+```
+
+The most commonly observed snowfall value is 0mm because it does not snow on most days in New York.
+
+```{r}
+ny_noaa %>% 
+  group_by(year) %>%
+  summarize(
+    mean_tmax = mean(tmax, na.rm = TRUE)
+```
 
