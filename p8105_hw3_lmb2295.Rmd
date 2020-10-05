@@ -43,7 +43,7 @@ accel_df = read_csv("./data/accel_data.csv")
 
 ## Clean the data
 
-This code cleans up column names, creates a weekday vs weekend variable. 
+This code cleans up column names and creates a weekday vs weekend variable. 
 ```{r}
 accel_df =
   janitor::clean_names(accel_df) %>%  
@@ -80,9 +80,9 @@ kable(accel_class_df)
 remove(accel_class_df)
 ```
 
-We can see from the table above that week, day_id, and the activity_* variables are numeric, the weekend variable is logical, and the day variable is a character variable. These are reasonable classes for the variable types so no further action is needed
+We can see from the table above that week, day_id, and the activity_* variables are numeric, the weekend variable is logical, and the day variable is a character variable. These are reasonable classes for the variable types so no further action is needed.
 
-The resulting dataset contains 35 observations and 1444 variables. The 35 observations represent 35 days of accelerometer data collected on a 63 year-old male with BMI 25, who was admitted to the Advanced Cardiac Care Center of Columbia University Medical Center and diagnosed with congestive heart failure. The variables include the week number for each of the seven weeks recorded, the number of the day recorded, the day of the week for the observed day, a variable stating whether or not the observed day was a weekend day, as well as 1440 activity_* variables, each representing an activity count for each minute in the day.
+The resulting dataset contains 35 observations and 1444 variables. The 35 observations represent 35 days of accelerometer data collected on a 63 year-old male with a BMI of 25, who was admitted to the Advanced Cardiac Care Center of Columbia University Medical Center and diagnosed with congestive heart failure. The variables include the week number for each of the seven weeks recorded, the number of the day recorded, the day of the week for the observed day, a variable stating whether or not the observed day was a weekend day, as well as 1440 activity_* variables, each representing an activity count for each minute in the day.
 
 ## Aggregate data
 
@@ -96,7 +96,7 @@ accel_df =
 ```
 
 
-In this next chunk of code, I am using a table to explore whether there is any obvious relationship between total daily activity and the day of monitoring and day of the week.
+In this next chunk of code, I am using a table to explore whether there is any obvious relationship between total daily activity and the day of monitoring or day of the week.
 ```{r}
 aggregate_df = 
   accel_df %>% 
@@ -160,9 +160,10 @@ accel_df %>%
     x = "Hour",
     y = "Activity Count") +
   scale_x_discrete(
-    breaks = c(0, 180, 360, 540, 720, 900, 1080, 1260), 
-    labels = c("12am", "3am", "6am", "9am", "12pm", "3pm", "6pm", "9pm" ))
+    breaks = c(180, 360, 540, 720, 900, 1080, 1260), 
+    labels = c("3am", "6am", "9am", "12pm", "3pm", "6pm", "9pm" ))
 ```
+
 We can see from this chart that this man is most active in the evening hours, the early morning hours, and sometimes midday. We can also see that the man seems to have become less active over the course of the observation period.
 
 
@@ -176,7 +177,7 @@ library(p8105.datasets)
 data("ny_noaa")
 ```
 
-This dataset is a able consisting of 259176 observations and 7 variables. These variables include id (the weather station ID), date, prcp (precipitation), snow and snwd (snowfall and snowdepth in mm), tmax and tmin (the maximum and minimum temperature recorded in tenths of degrees C). A considerable number of measurements for the precipitation, snowfall, and temperature measurements are missing, which could present issues depending on the data analysis you intend to conduct. The large number of observations can also be difficult for some devices to handle, and there is no benefit as many of the observations contain no useful measurements.
+This dataset is a table consisting of 259176 observations and 7 variables. These variables include id (the weather station ID), date, prcp (precipitation), snow and snwd (snowfall and snowdepth in mm), tmax and tmin (the maximum and minimum temperature recorded in tenths of degrees C). A considerable number of measurements for the precipitation, snowfall, and temperature measurements are missing, which could present issues depending on the data analysis you intend to conduct. The large number of observations can also be difficult for some devices to handle, and there is no benefit as many of the observations contain no useful measurements.
 
 ## Data Cleaning
 
