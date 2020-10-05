@@ -177,7 +177,7 @@ library(p8105.datasets)
 data("ny_noaa")
 ```
 
-This dataset is a table consisting of 259176 observations and 7 variables. These variables include id (the weather station ID), date, prcp (precipitation), snow and snwd (snowfall and snowdepth in mm), tmax and tmin (the maximum and minimum temperature recorded in tenths of degrees C). A considerable number of measurements for the precipitation, snowfall, and temperature measurements are missing, which could present issues depending on the data analysis you intend to conduct. The large number of observations can also be difficult for some devices to handle, and there is no benefit as many of the observations contain no useful measurements.
+This dataset is a table consisting of 259176 observations and 7 variables. These variables include id (the weather station ID), date, prcp (precipitation), snow and snwd (snowfall and snowdepth in mm), tmax and tmin (the maximum and minimum temperature recorded in tenths of degrees C). A considerable number of measurements for the precipitation, snowfall, and temperature measurements are missing, which could present issues depending on the data analysis you intend to conduct.
 
 ## Data Cleaning
 
@@ -195,10 +195,12 @@ kable(noaa_class_df)
 ```{r echo = FALSE}
 remove(noaa_class_df)
 ```
+
 tmin and tmax currently exists as character vectors. This could present a problem for data analysis. I will address this issue in the next cleaning step.
 
 
-Here, I am separating the data variable into month, day, and year variables, converting the minimum and maximum temperatures into a more reasonable class type, and changing the snow and temperature units into more intuitive units.
+Here, I am separating the data variable into month, day, and year variables, converting the minimum and maximum temperatures into a more reasonable class type (numeric), and changing the snow and temperature units into more intuitive units (cm for precipitation and snow measurements and degrees Celsius for temperature measurements).
+
 ```{r}
 ny_noaa_df = 
 ny_noaa %>% 
@@ -207,6 +209,7 @@ ny_noaa %>%
   mutate(
     tmin = as.numeric(tmin),
     tmax = as.numeric(tmax),
+    pcrp = prcp/100,
     tmin = tmin/10,
     tmax = tmax/10,
     snow = snow/10,
@@ -216,6 +219,8 @@ ny_noaa %>%
   
 ```
 
+This data has been cleaned, but we can see that there are some datapoints with unreasonable values. For example, in August and September 2008 where nearly all of the temperature measurements from the station USR0000NGAN are 60 degrees. These are clearly unreasonably high temperatures for NY, even in August and it is reasonable to assume that the measurements taken by this station during this time period were taken in error.
+
 ```{r}
 ny_noaa %>% 
   group_by(snow) %>%
@@ -223,18 +228,17 @@ ny_noaa %>%
     n_obs = n())
 ```
 
-The most commonly observed snowfall value is 0mm because it does not snow on most days in New York.
+The most commonly observed snowfall value is 0cm because it does not snow on most days in New York. We can also see that on one day, 0.13cm of snowfall was recorded in error, another clear measurement error.
 
 ```{r}
 jan_p = 
-  ny_noaa_df %>% 
+ny_noaa_df %>% 
   filter(month == "january") %>%
+  group_by(id, year) %>% 
+  mutate(id_tmax_mean = mean(tmax, na.rm = TRUE)) %>% 
   group_by(year) %>% 
-  summarize(
-      mean_tmax = mean(tmax, na.rm = TRUE)
-  ) %>% 
-  ggplot(aes(x = year, y = mean_tmax)) + 
-    geom_point() + geom_line() +
+  ggplot(aes(x = year, y = id_tmax_mean)) + 
+    geom_boxplot() + geom_line() +
   scale_x_discrete(
     breaks = c(1985, 1990, 1995, 2000, 2005)) +
   labs(
@@ -242,15 +246,16 @@ jan_p =
     x = "Year",
     y = "Average Maximum Temperature")
 
+
+  
 jul_p = 
 ny_noaa_df %>% 
   filter(month == "july") %>%
+  group_by(id, year) %>% 
+  mutate(id_tmax_mean = mean(tmax, na.rm = TRUE)) %>% 
   group_by(year) %>% 
-  summarize(
-      mean_tmax = mean(tmax, na.rm = TRUE)
-  ) %>% 
-  ggplot(aes(x = year, y = mean_tmax)) + 
-    geom_point() + geom_line() +
+  ggplot(aes(x = year, y = id_tmax_mean)) + 
+    geom_boxplot() + geom_line() +
   scale_x_discrete(
     breaks = c(1985, 1990, 1995, 2000, 2005)) +
   labs(
@@ -261,6 +266,7 @@ ny_noaa_df %>%
 jul_p/jan_p
 
 ```
+This is a a two-panel plot showing the average max temperature in January and in July in each station across years.There doesn't appear to be much of a pattern in either chart, although maximum temperatures in July seem to be much more stable than those in January. There are some outliers in the data, the most notable being the low measurement in July 1988.
 
 ```{r}
 tmax_p = 
