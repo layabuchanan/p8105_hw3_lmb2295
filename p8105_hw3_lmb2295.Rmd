@@ -153,7 +153,7 @@ accel_df %>%
     names_prefix = "activity_",
     values_to = "activity_count"
   ) %>% 
-  ggplot(aes(x = activity_number, y = activity_count, color = day_id)) +
+  ggplot(aes(x = activity_number, y = activity_count, color = day)) +
   geom_line() + 
   labs(
     title = "24 hour Activity Time Courses",
@@ -164,7 +164,7 @@ accel_df %>%
     labels = c("3am", "6am", "9am", "12pm", "3pm", "6pm", "9pm" ))
 ```
 
-We can see from this chart that this man is most active in the evening hours, the early morning hours, and sometimes midday. We can also see that the man seems to have become less active over the course of the observation period.
+We can see from this chart that this man is most active in the evening hours, the early morning hours, and sometimes midday. 
 
 
 # Problem 3: NY NOAA Data
@@ -269,37 +269,17 @@ jul_p/jan_p
 This is a a two-panel plot showing the average max temperature in January and in July in each station across years.There doesn't appear to be much of a pattern in either chart, although maximum temperatures in July seem to be much more stable than those in January. There are some outliers in the data, the most notable being the low measurement in July 1988. 
 
 ```{r warning = FALSE}
-tmax_p = 
-  ggplot(ny_noaa_df, aes(x = tmax, fill = "blue")) + 
-  geom_histogram(alpha = .4, adjust = .5, color = "blue") +
+tmaxmin_p = 
+  ggplot(ny_noaa_df, aes(x = tmax, y = tmin)) + 
+  geom_bin2d() +
 labs(
     title = "Max daily Temperature Frequencies",
-    x = "Max Temp",
-    y = "Frequency") +
-  scale_x_continuous(
-    breaks = c(-40, -20, 0, 20, 40)) %>% 
-  theme(legend. position = "none")
+    x = "Maximum Temperature (C)",
+    y = "Minimum Temperature (C)") +
+  theme(legend.position = "right")
 
-tmin_p = 
-  ggplot(ny_noaa_df, aes(x = tmin, fill = "blue")) + 
-  geom_histogram(alpha = .4, adjust = .5, color = "blue") +
-labs(
-    title = "Min daily Temperature Frequencies",
-    x = "Max Temp",
-    y = "Frequency") +
-  scale_x_continuous(
-    breaks = c(-40, -20, 0, 20, 40)) %>% 
-  theme(legend. position = "none")
-
-tmin_p/tmax_p
-```
-
-This is a chart showing the for each minimum and maximum temperature for the full dataset. Most of the measurements for both the minimum and the maximum are clustered around the same values, between -30 and 30 degrees. There are some outliers going as high as 60 degrees and as low as nearly -60 degrees, again, this is likely due to measurement errors discussed above.
-
-In my last step of data exploration, I will make a plot showing the distribution of snowfall values greater than 0 and less than 100 separately by year.
-
-```{r}
-ny_noaa_df %>% 
+snow_p = 
+  ny_noaa_df %>% 
   filter(snow > 0, snow < 101.60) %>% 
   group_by(year) %>% 
   ggplot(aes(x = year, y = snow, color = "blue")) + 
@@ -310,8 +290,10 @@ ny_noaa_df %>%
     title = "Snowfall Events Volume by Year",
     x = "Year",
     y = "Snowfall (cm)" 
-  )
+  ) +
+    theme(legend.position = "none")
 
+tmaxmin_p+snow_p
 ```
 
-This is a plot make a plot showing the distribution of snowfall values greater than 0 and less than 100 separately by year. You can see that overwhelmingly most of the snowfall events had a volume of less than 15 cm of snowfall. However, there are some extreme outliers up to nearly 80 cm of snow in the 1980s. 
+This is a two panel chart with the first panel showing the minimum vs maximum temperature for the full dataset. Most of the measurements for both the minimum and the maximum are clustered around the same values, between -30 and 30 degrees. There are some outliers going as high as 60 degrees and as low as nearly -60 degrees, again, this is likely due to measurement errors discussed above. The second panel is a plot make a plot showing the distribution of snowfall values greater than 0 and less than 100 separately by year. You can see that overwhelmingly most of the snowfall events had a volume of less than 15 cm of snowfall. However, there are some extreme outliers up to nearly 80 cm of snow in the 1980s. 
